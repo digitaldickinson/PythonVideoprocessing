@@ -1,20 +1,22 @@
 """
-A SCRIPT TO GRAB A VIDEO AND THEN USE OPENCV TO SAMPLE ONE FRAME A SECOND.
+A SCRIPT TO CREATE CINEMA REDUX STYLE IMAGE FROM A VIDEO FILE
+Inspired by Brendan Dawes cinenmaredux work - http://www.brendandawes.com/projects/cinemaredux
 
 """
-import cv2
-import numpy as np
+#import some libs to work with
+import cv2 #The openCV lib to do video processing
+import numpy as np #use this for arrays
 import os, os.path #using this to count images
-import cv2
-import math
+import math #Use this to round up numbers
 from glob import iglob #Grab files to do stuff with
 from PIL import Image #Handle the image stuff
-import re # This for the sorting of filenames
-import warnings #this for the DecompressionBombWarning
+import re # Regex - This for the sorting of filenames
+import warnings #this for the DecompressionBombWarning that sometimes appears
 
+#Define some functions to do stuff
 
-#import some libs to work with
 def extract_image_one_fps(video_source_path):
+    #This function takes the video specified in video_source_path and grabs one frame every second. This came from https://stackoverflow.com/questions/33311153/python-extracting-and-saving-video-frames
 
     vidcap = cv2.VideoCapture(video_source_path)
     count = 0
@@ -33,20 +35,20 @@ def extract_image_one_fps(video_source_path):
       count += 1
 
 def count_images():
+    #Short function to count the number of frame images in the frames folder. We use this to work out how many rows the image will have
     img_num = len([name for name in os.listdir('./frames') if os.path.isfile(name)])
     print (image_num)
 
 def numericalSort(value):
     #This is function that helps sort the images into the right order
-    #https://stackoverflow.com/questions/12093940/reading-files-in-a-particular-order-in-python
     parts = numbers.split(value)
     parts[1::2] = map(int, parts[1::2])
     return parts
 
 def thumbnailer(thumbpath, grid, thumb_size, background_color):
-    """ Coroutine to receive image file names and produce thumbnail pages of
-        them laid-out in a grid. This came from https://stackoverflow.com/questions/38421160/combine-multiple-different-images-from-a-directory-into-a-canvas-sized-3x6
-    """
+     #Coroutine to receive image file names and produce thumbnail pages of them laid-out in a grid.
+     #This came from https://stackoverflow.com/questions/38421160/combine-multiple-different-images-from-a-directory-into-a-canvas-sized-3x6
+
     page_num = 0
     page_extent = grid[1]*thumb_size[0], grid[0]*thumb_size[1]
     print(page_extent[0], page_extent[1])
@@ -87,21 +89,33 @@ def thumbnailer(thumbpath, grid, thumb_size, background_color):
             print('Saving thumbpage{}.jpg'.format(page_num))
             new_img.save(os.path.join(thumbpath, 'thumbpage{}.jpg'.format(page_num)))
 
+#Turn off a warning that appears when the image is looking too big. Called a DecompressionBombWarning
 warnings.simplefilter('ignore', Image.DecompressionBombWarning)
+
+# Tell it where the video is. Assumes it's in the same directory as the script
 video = '120418.mov'
+#Tell it where to put the frames and the final image
 path = 'frames/'
+#Run the function that samples the video file. This will drop a png file into the frames folder for every second of video.
 extract_image_one_fps(video)
 
+#Now we have the frames we can begin to create the composite image.
+# First problem to get over is how to read the image files from the frames folder in the right order as the standard sorting function (look for sorted() below) in Python deosn't do it!
+# Found a solution to this at #https://stackoverflow.com/questions/12093940/reading-files-in-a-particular-order-in-python
+#First thing is to create a variable that splits out the numbers
 numbers = re.compile(r'(\d+)')
+#Then we hoover up all the images in the frames flder into a list using a custom function called numericalSort to make sure they are in the right order.
 npath = [infile for infile in sorted(iglob(os.path.join(path, '*.png')), key=numericalSort)]
-#How many images?
+#Get some quick stats on what we are wokring withself.
+#First, how many images?
 num_images = len(npath)
 print ("We've got "+len(npath)+" frames to work with ")
-#How many minutes?
+#We can then use that to work out how many rows we'll need. Dawes uses one row for each minute of footage, thats sixty images per row. So we can do a basic divide which we then round up using math.ceil function so that we have full rows.
 minutes = math.ceil(len(npath)/60)
 print ("And "+minutes+" minutes overall")
-
-#The function I found uses coroutines, I'm not familiar with them but I did need to tweak it a little for Python3
+#Now we can build the actual image.
+#The function I found uses coroutines, I'm not familiar with them but it worked so that's for another day. I did need to tweak it a little for Python3. For example .next and xrange are not supported but it only took a quick google of the error message to sort that. 
+#Set some paremeters. In this case the number of rows is set with the minutes variable we created above.
 coroutine = thumbnailer(path, (minutes,60), (384,216), 'black')
 coroutine.__next__()  # start it
 
