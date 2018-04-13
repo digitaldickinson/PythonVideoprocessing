@@ -6,6 +6,6 @@ The code is heavily commented including links to the various stackoverflow posts
 There are a few things to be aware of in the code:
  - It's python 3
  - You'll need to install some libraries like OpenCV. My version of python is from the anaconda install so adding the libs wasn't too hard. 
- - the video file is in the same folder as the script
- - there is a folder called frames in the same folder which is where the raw images are stored.
+ - it assumes the video file is in the same folder as the script
+ - it also assumes there is a folder called frames in the same folder which is where the raw images are stored.
  - it doesn't clean up after itself so there could be lots of images left around if the video file is long!
