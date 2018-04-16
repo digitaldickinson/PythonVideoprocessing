@@ -114,7 +114,7 @@ print ("We've got "+len(npath)+" frames to work with ")
 minutes = math.ceil(len(npath)/60)
 print ("And "+minutes+" minutes overall")
 #Now we can build the actual image.
-#The function I found uses coroutines, I'm not familiar with them but it worked so that's for another day. I did need to tweak it a little for Python3. For example .next and xrange are not supported but it only took a quick google of the error message to sort that. 
+#The function I found uses coroutines, I'm not familiar with them but it worked so that's for another day. I did need to tweak it a little for Python3. For example .next and xrange are not supported but it only took a quick google of the error message to sort that.
 #Set some paremeters. In this case the number of rows is set with the minutes variable we created above.
 coroutine = thumbnailer(path, (minutes,60), (384,216), 'black')
 coroutine.__next__()  # start it
