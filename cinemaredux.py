@@ -93,7 +93,7 @@ def thumbnailer(thumbpath, grid, thumb_size, background_color):
 warnings.simplefilter('ignore', Image.DecompressionBombWarning)
 
 # Tell it where the video is. Assumes it's in the same directory as the script
-video = '120418.mov'
+video = '160418am.mov'
 #Tell it where to put the frames and the final image
 path = 'frames/'
 #Run the function that samples the video file. This will drop a png file into the frames folder for every second of video.
@@ -109,10 +109,10 @@ npath = [infile for infile in sorted(iglob(os.path.join(path, '*.png')), key=num
 #Get some quick stats on what we are wokring withself.
 #First, how many images?
 num_images = len(npath)
-print ("We've got "+len(npath)+" frames to work with ")
+
 #We can then use that to work out how many rows we'll need. Dawes uses one row for each minute of footage, thats sixty images per row. So we can do a basic divide which we then round up using math.ceil function so that we have full rows.
 minutes = math.ceil(len(npath)/60)
-print ("And "+minutes+" minutes overall")
+
 #Now we can build the actual image.
 #The function I found uses coroutines, I'm not familiar with them but it worked so that's for another day. I did need to tweak it a little for Python3. For example .next and xrange are not supported but it only took a quick google of the error message to sort that.
 #Set some paremeters. In this case the number of rows is set with the minutes variable we created above.
