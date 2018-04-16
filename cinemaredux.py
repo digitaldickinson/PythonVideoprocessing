@@ -24,15 +24,27 @@ def extract_image_one_fps(video_source_path):
     while success:
       vidcap.set(cv2.CAP_PROP_POS_MSEC,(count*1000))
       success,image = vidcap.read()
+      # There is a funny error that the last frame returns an empty image. I think this a problem with the camera
+      # The if statement below checks to see if the image has been read.
+      if success:
+          ## Stop when last frame is identified
+          image_last = cv2.imread("frames/frame{}.png".format(count-1))
+          if np.array_equal(image,image_last):
+              break
 
-      ## Stop when last frame is identified
-      image_last = cv2.imread("frames/frame{}.png".format(count-1))
-      if np.array_equal(image,image_last):
-          break
-
-      cv2.imwrite("frames/frame%d.png" % count, image)     # save frame as PNG file
-      print("done frame"+format(count))
+          cv2.imwrite("frames/frame%d.png" % count, image)     # save frame as PNG file
+          print("done frame"+format(count))
       count += 1
+
+def remove_files(folder):
+    for the_file in os.listdir(path):
+        file_path = os.path.join(folder, the_file)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+            #elif os.path.isdir(file_path): shutil.rmtree(file_path)
+        except Exception as e:
+            print(e)
 
 def count_images():
     #Short function to count the number of frame images in the frames folder. We use this to work out how many rows the image will have
@@ -45,7 +57,7 @@ def numericalSort(value):
     parts[1::2] = map(int, parts[1::2])
     return parts
 
-def thumbnailer(thumbpath, grid, thumb_size, background_color):
+def thumbnailer(thumbpath, op_path, grid, thumb_size, background_color):
      #Coroutine to receive image file names and produce thumbnail pages of them laid-out in a grid.
      #This came from https://stackoverflow.com/questions/38421160/combine-multiple-different-images-from-a-directory-into-a-canvas-sized-3x6
 
@@ -77,25 +89,30 @@ def thumbnailer(thumbpath, grid, thumb_size, background_color):
                     continue  # no break, continue outer loop
                 break  # break occurred, terminate outer loop
 
-            print('====> thumbnail page completed')
+            print('Thumbnail page completed...')
             if paste_cnt:
                 page_num += 1
                 print('Saving thumbpage{}.jpg'.format(page_num))
-                new_img.save(os.path.join(thumbpath, 'thumbpage{}.jpg'.format(page_num)))
+                new_img.save(os.path.join(op_path, 'thumbpage{}.jpg'.format(page_num)))
     finally:
-        print('====> finally')
+        print('Last part...')
         if paste_cnt:
             page_num += 1
             print('Saving thumbpage{}.jpg'.format(page_num))
-            new_img.save(os.path.join(thumbpath, 'thumbpage{}.jpg'.format(page_num)))
+            new_img.save(os.path.join(op_path, 'thumbpage{}.jpg'.format(page_num)))
 
 #Turn off a warning that appears when the image is looking too big. Called a DecompressionBombWarning
 warnings.simplefilter('ignore', Image.DecompressionBombWarning)
 
 # Tell it where the video is. Assumes it's in the same directory as the script
-video = '160418am.mov'
+video = 'test.mov'
 #Tell it where to put the frames and the final image
 path = 'frames/'
+#Then the path the save the finsihed thumbnail
+op_path = 'output/'
+# The following functions deletes any files in the frames folder before we start
+# Comment this out if you don't want to risk it.
+remove_files(path)
 #Run the function that samples the video file. This will drop a png file into the frames folder for every second of video.
 extract_image_one_fps(video)
 
@@ -109,18 +126,17 @@ npath = [infile for infile in sorted(iglob(os.path.join(path, '*.png')), key=num
 #Get some quick stats on what we are wokring withself.
 #First, how many images?
 num_images = len(npath)
-
 #We can then use that to work out how many rows we'll need. Dawes uses one row for each minute of footage, thats sixty images per row. So we can do a basic divide which we then round up using math.ceil function so that we have full rows.
 minutes = math.ceil(len(npath)/60)
 
 #Now we can build the actual image.
 #The function I found uses coroutines, I'm not familiar with them but it worked so that's for another day. I did need to tweak it a little for Python3. For example .next and xrange are not supported but it only took a quick google of the error message to sort that.
 #Set some paremeters. In this case the number of rows is set with the minutes variable we created above.
-coroutine = thumbnailer(path, (minutes,60), (384,216), 'black')
+coroutine = thumbnailer(path, op_path, (minutes,60), (384,216), 'black')
 coroutine.__next__()  # start it
 
 for filepath in npath:
     coroutine.send(filepath)
 
-print('====> closing coroutine')
+print('Done making the thumbnails')
 coroutine.close()
