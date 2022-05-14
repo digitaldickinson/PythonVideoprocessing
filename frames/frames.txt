@@ -1,1 +1,0 @@
-The script assumes that this folder exists and uses it to store the video grabs and the final output
